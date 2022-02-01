@@ -1,21 +1,32 @@
-from discord.ext import commands
+import discord
+import datetime
 from os import getenv
-import traceback
 
-bot = commands.Bot(command_prefix='/')
+TOKEN = getenv('DISCORD_BOT_TOKEN')
+MESSAGE_ROOM = 937677135349440513
+
+client = discord.Client()
+
+def datetime_message(datetime_now:datetime.datetime):
+    return str(datetime_now.year)+'/'+str(datetime_now.month)+'/'+str(datetime_now.day)+' '+str(datetime_now.hour)+':'+str(datetime_now.minute)+':'+str(datetime_now.second)
+
+@client.event
+async def on_voice_state_update(member:discord.Member, before, after):
+    if before.channel != after.channel:
+        message_room = client.get_channel(MESSAGE_ROOM)
+        now_time = datetime_message(datetime.datetime.now())
+
+        #enter alert
+        if before.channel is None:
+            message = member.name +' has joined to '+ after.channel.name +' at '+ now_time
+            #print(message)
+            await message_room.send(message)
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    orig_error = getattr(error, "original", error)
-    error_msg = ''.join(traceback.TracebackException.from_exception(orig_error).format())
-    await ctx.send(error_msg)
+        #exit alert
+        elif after.channel is None:
+            message = member.name +' has left '+ before.channel.name +' at '+ now_time
+            #print(message)
+            await message_room.send(message)
 
-
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
-
-
-token = getenv('DISCORD_BOT_TOKEN')
-bot.run(token)
+client.run(TOKEN)
