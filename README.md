@@ -13,7 +13,7 @@
 ```
 
 ## deploy
-Harekuにデプロイする．
+Herokuにデプロイする．
 やり方は以下参照．
 
 https://qiita.com/1ntegrale9/items/aa4b373e8895273875a8
