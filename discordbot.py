@@ -1,7 +1,7 @@
 import discord
 import datetime
-import pytz
 from os import getenv
+
 
 TOKEN = getenv('DISCORD_BOT_TOKEN')
 MESSAGE_ROOM = 937677135349440513
@@ -9,7 +9,7 @@ MESSAGE_ROOM = 937677135349440513
 client = discord.Client()
 
 def datetime_message():
-    datetime_now = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
+    datetime_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     return str(datetime_now.year)+'/'+str(datetime_now.month)+'/'+str(datetime_now.day)+' '+str(datetime_now.hour)+':'+str(datetime_now.minute)+':'+str(datetime_now.second)
 
 @client.event
