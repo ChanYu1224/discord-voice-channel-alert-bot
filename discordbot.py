@@ -4,7 +4,7 @@ from os import getenv
 
 
 TOKEN = getenv('DISCORD_BOT_TOKEN')
-MESSAGE_ROOM = getenv('DISCORD_MESSAGE_ROOM')
+MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
 
 client = discord.Client()
 
