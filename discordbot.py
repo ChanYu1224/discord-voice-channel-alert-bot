@@ -20,14 +20,13 @@ async def on_voice_state_update(member:discord.Member, before, after):
 
         #enter alert
         if before.channel is None:
-            message = member.name +' has joined to '+ after.channel.name +' at '+ now_time
+            message = member.name +' has joined to '+ after.channel.name
             #print(message)
             await message_room.send(message)
 
-
         #exit alert
         elif after.channel is None:
-            message = member.name +' has left '+ before.channel.name +' at '+ now_time
+            message = member.name +' has left '+ before.channel.name
             #print(message)
             await message_room.send(message)
 
