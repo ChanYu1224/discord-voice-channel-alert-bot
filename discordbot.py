@@ -10,7 +10,7 @@ client = discord.Client()
 
 def datetime_message():
     datetime_now = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
-    return str(datetime_now.year)+'/'+str(datetime_now.month)+'/'+str(datetime_now.day)+' '+str(datetime_now.hour)+':'+str(datetime_now.minute)+':'+str(datetime_now.second)
+    return str(datetime_now.year)+'/'+str(datetime_now.month)+'/'+str(datetime_now.day)+' '+str(datetime_now.hour).zfill(2)+':'+str(datetime_now.minute).zfill(2)+':'+str(datetime_now.second).zfill(2)
 
 @client.event
 async def on_voice_state_update(member:discord.Member, before, after):
