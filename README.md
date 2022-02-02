@@ -21,4 +21,4 @@ https://qiita.com/1ntegrale9/items/aa4b373e8895273875a8
 ## template
 テンプレートとして以下を使用．圧倒的感謝．
 
-https://github.com/ChanYu1224/discord-voice-channel-alert-bot
+https://github.com/DiscordBotPortalJP/discordpy-startup
