@@ -14,9 +14,12 @@
 
 ## deploy
 Herokuにデプロイする．
-やり方は以下参照．
 
-https://qiita.com/1ntegrale9/items/aa4b373e8895273875a8
+環境変数は以下の通りに設定する．
+```
+DISCORD_BOT_TOKEN=<Discord BotのToken>
+DISCORD_MESSAGE_ROOM=<Discord Botがアラートを行うテキストチャンネルID>
+```
 
 ## template
 テンプレートとして以下を使用．圧倒的感謝．
