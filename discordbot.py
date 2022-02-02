@@ -2,7 +2,6 @@ import discord
 import datetime
 from os import getenv
 
-
 TOKEN = getenv('DISCORD_BOT_TOKEN')
 MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
 
@@ -16,7 +15,7 @@ def datetime_message():
 async def on_voice_state_update(member:discord.Member, before, after):
     if before.channel != after.channel:
         message_room = client.get_channel(MESSAGE_ROOM)
-        now_time = datetime_message()
+        #now_time = datetime_message()
 
         #enter alert
         if before.channel is None:

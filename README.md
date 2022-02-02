@@ -4,12 +4,12 @@
 
 入室時
 ```
-<user> has joined to <voice channel> at <date>
+<user>が<voice channel>に入室
 ```
 
 退室時
 ```
-<user> has left <voice channel> at <date>
+<user>が<voice channel>を退室
 ```
 
 ## deploy
