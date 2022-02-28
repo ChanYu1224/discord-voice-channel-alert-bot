@@ -19,13 +19,13 @@ async def on_voice_state_update(member:discord.Member, before, after):
 
         #enter alert
         if before.channel is None:
-            message = member.name +'が'+ after.channel.name +'に入室'
+            message = member.display_name +'が'+ after.channel.name +'に入室'
             #print(message)
             await message_room.send(message)
 
         #exit alert
         elif after.channel is None:
-            message = member.name +'が'+ before.channel.name +'を退室'
+            message = member.display_name +'が'+ before.channel.name +'を退室'
             #print(message)
             await message_room.send(message)
 
