@@ -8,7 +8,7 @@ import datetime
 from working_time import WorkingTime
 
 # specify the mode, debugging or real environemnt
-debug = True
+debug = False
 if debug:
     with open("./dev_settings.json", mode="r") as setting_file:
         setting_dict = json.load(setting_file)
@@ -83,7 +83,6 @@ async def on_voice_state_update(member:discord.Member, before, after):
                     working_time.end_working()
 
             await message_room.send(message)
-
 
 show_working_times.start()
 client.run(TOKEN)
