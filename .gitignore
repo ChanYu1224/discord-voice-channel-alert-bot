@@ -105,3 +105,4 @@ venv.bak/
 
 # original file
 dev_settings.json
+.vscode/
