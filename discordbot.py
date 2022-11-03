@@ -8,17 +8,25 @@ import datetime
 from working_time import WorkingTime
 
 # specify the mode, debugging or real environemnt
-debug = False
+debug = True
 if debug:
     with open("./dev_settings.json", mode="r") as setting_file:
         setting_dict = json.load(setting_file)
-    TOKEN = setting_dict["TOKEN"]
-    MESSAGE_ROOM = int(setting_dict["CHANNNEL_ID"])
+    TOKEN = setting_dict["DISCORD_BOT_TOKEN"]
+    MESSAGE_ROOM = int(setting_dict["DISCORD_MESSAGE_ROOM"])
+    WORKING_ROOMS = setting_dict["DISCORD_WORKING_ROOMS"].split(",")
+    WEEKLY_ALERT_DAY = int(setting_dict["DISCORD_WEEKLY_ALERT_DAY"])
+    WEEKLY_ALERT_TIME = setting_dict["DISCORD_WEEKLY_ALERT_TIME"]
+    DAILY_ALERT_TIME = setting_dict["DISCORD_DAILY_ALERT_TIME"]
 else:
     TOKEN = getenv('DISCORD_BOT_TOKEN')
     MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
+    WORKING_ROOMS = getenv["DISCORD_WORKING_ROOMS"].split(",")
+    WEEKLY_ALERT_DAY = int(getenv["DISCORD_WEEKLY_ALERT_DAY"])
+    WEEKLY_ALERT_TIME = getenv["DISCORD_WEEKLY_ALERT_TIME"]
+    DAILY_ALERT_TIME = getenv["DISCORD_DAILY_ALERT_TIME"]
 
-# initiation of necessary instances
+# initialization of necessary instances
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 working_time_dict = {}
@@ -30,7 +38,8 @@ async def show_working_times():
     now_time = datetime.datetime.now()
     now = now_time.strftime("%H:%M")
     
-    if date.weekday() == 0 and now == "21:00":
+    # weekly alert
+    if date.weekday() == WEEKLY_ALERT_DAY and now == WEEKLY_ALERT_TIME:
         # the header of the message
         message = "今週の作業時間\n"
         for member_name, working_time in working_time_dict.items():
@@ -42,15 +51,37 @@ async def show_working_times():
                 working_time.end_working()
                 working_time.start_working()
             
-            # create the message explainging the total working time
-            message += "{0} : {1}\n".format(member_name, working_time)
+            # create the message explaining the total working time
+            message += "{0}\t{1}\n".format(member_name, working_time.get_weekly_working_time_str())
             
             # reset the working time weekly
-            working_time.reset_working_time()
+            working_time.reset_weekly_working_time()
             
         message_room = client.get_channel(MESSAGE_ROOM)
         await message_room.send(message)
+    
+    # daily alert
+    if now == DAILY_ALERT_TIME:
+        # the header of the message
+        message = "今日の作業時間\n"
+        for member_name, working_time in working_time_dict.items():
+            # make the annotation for `working_time`
+            working_time: WorkingTime = working_time
+            
+            # if you are working now, it resets the working time ongoing
+            if working_time.is_working():
+                working_time.end_working()
+                working_time.start_working()
+            
+            # create the message explaining the total working time
+            message += "{0}\t{1}\n".format(member_name, working_time.get_daily_working_time_str())
 
+            # reset the working time daily
+            working_time.reset_daily_working_time()
+            
+        message_room = client.get_channel(MESSAGE_ROOM)
+        await message_room.send(message)
+        
 
 # alert of enter and exit
 @client.event
