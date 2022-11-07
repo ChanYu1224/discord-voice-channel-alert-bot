@@ -3,13 +3,13 @@ from discord.ext import tasks
 
 import json
 from os import getenv
+import os
 import datetime
 
 from working_time import WorkingTime
 
-# specify the mode, debugging or real environemnt
-debug = True
-if debug:
+# if `dev_settings.json` exists, read it
+if os.path.exists("./dev_settings.json"):
     with open("./dev_settings.json", mode="r") as setting_file:
         setting_dict = json.load(setting_file)
     TOKEN = setting_dict["DISCORD_BOT_TOKEN"]
