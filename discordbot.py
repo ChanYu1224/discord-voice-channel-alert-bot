@@ -22,9 +22,9 @@ else:
     TOKEN = getenv('DISCORD_BOT_TOKEN')
     MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
     WORKING_ROOMS = list(map(int, getenv("DISCORD_WORKING_ROOMS").split(",")))
-    WEEKLY_ALERT_DAY = int(getenv["DISCORD_WEEKLY_ALERT_DAY"])
-    WEEKLY_ALERT_TIME = getenv["DISCORD_WEEKLY_ALERT_TIME"]
-    DAILY_ALERT_TIME = getenv["DISCORD_DAILY_ALERT_TIME"]
+    WEEKLY_ALERT_DAY = int(getenv("DISCORD_WEEKLY_ALERT_DAY"))
+    WEEKLY_ALERT_TIME = getenv("DISCORD_WEEKLY_ALERT_TIME")
+    DAILY_ALERT_TIME = getenv("DISCORD_DAILY_ALERT_TIME")
     
 
 # initialization of necessary instances
