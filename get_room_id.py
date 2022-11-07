@@ -7,7 +7,7 @@ client = discord.Client(intents=intents)
 with open("./dev_settings.json", mode="r") as setting_file:
     setting_dict = json.load(setting_file)
 
-TOKEN = setting_dict["TOKEN"]
+TOKEN = setting_dict["DISCORD_BOT_TOKEN"]
 
 @client.event
 async def on_ready():
@@ -16,7 +16,5 @@ async def on_ready():
         print("channel name", str(channel.name))
         print("channel ID", str(channel.id))
     print("---------------")
-    
-    exit()
 
 client.run(TOKEN)
