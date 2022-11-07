@@ -14,17 +14,18 @@ if debug:
         setting_dict = json.load(setting_file)
     TOKEN = setting_dict["DISCORD_BOT_TOKEN"]
     MESSAGE_ROOM = int(setting_dict["DISCORD_MESSAGE_ROOM"])
-    WORKING_ROOMS = setting_dict["DISCORD_WORKING_ROOMS"].split(",")
+    WORKING_ROOMS = list(map(int, setting_dict["DISCORD_WORKING_ROOMS"].split(",")))
     WEEKLY_ALERT_DAY = int(setting_dict["DISCORD_WEEKLY_ALERT_DAY"])
     WEEKLY_ALERT_TIME = setting_dict["DISCORD_WEEKLY_ALERT_TIME"]
     DAILY_ALERT_TIME = setting_dict["DISCORD_DAILY_ALERT_TIME"]
 else:
     TOKEN = getenv('DISCORD_BOT_TOKEN')
     MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
-    WORKING_ROOMS = getenv["DISCORD_WORKING_ROOMS"].split(",")
+    WORKING_ROOMS = list(map(int, getenv["DISCORD_WORKING_ROOMS"].split(",")))
     WEEKLY_ALERT_DAY = int(getenv["DISCORD_WEEKLY_ALERT_DAY"])
     WEEKLY_ALERT_TIME = getenv["DISCORD_WEEKLY_ALERT_TIME"]
     DAILY_ALERT_TIME = getenv["DISCORD_DAILY_ALERT_TIME"]
+    
 
 # initialization of necessary instances
 intents = discord.Intents.all()
@@ -85,7 +86,11 @@ async def show_working_times():
 
 # alert of enter and exit
 @client.event
-async def on_voice_state_update(member:discord.Member, before, after):
+async def on_voice_state_update(
+        member:discord.Member,
+        before:discord.VoiceState,
+        after:discord.VoiceState
+    ):
     if before.channel != after.channel:
         message_room = client.get_channel(MESSAGE_ROOM)
         member_name = member.display_name
@@ -93,27 +98,47 @@ async def on_voice_state_update(member:discord.Member, before, after):
 
         # enter alert
         if before.channel is None:
-            message = member_name +'が'+ after.channel.name +'に入室'
-            
             # update the state of working time
-            if not member_name in working_time_dict.keys():
-                working_time_dict[member_name] = WorkingTime(now_time)
-            working_time: WorkingTime = working_time_dict[member_name]
-            working_time.start_working()
+            if after.channel.id in WORKING_ROOMS:                
+                if not member_name in working_time_dict.keys():
+                    working_time_dict[member_name] = WorkingTime(now_time)
+                working_time: WorkingTime = working_time_dict[member_name]
+                working_time.start_working()
             
+            message = member_name +'が'+ after.channel.name +'に入室'
             await message_room.send(message)
 
         # exit alert
         elif after.channel is None:
-            message = member_name +'が'+ before.channel.name +'を退室'
-            
             # update the state of working time
             if member_name in working_time_dict.keys():
                 working_time: WorkingTime = working_time_dict[member_name]
                 if working_time.is_working():
                     working_time.end_working()
-
+            
+            message = member_name +'が'+ before.channel.name +'を退室'
             await message_room.send(message)
+        
+        # change the room
+        else:
+            # update the state of working time
+            if before.channel.id in WORKING_ROOMS and not after.channel.id in WORKING_ROOMS:
+                # move from working room
+                if member_name in working_time_dict.keys():
+                    working_time: WorkingTime = working_time_dict[member_name]
+                    if working_time.is_working():
+                        working_time.end_working()
+                        
+            elif not before.channel.id in WORKING_ROOMS and after.channel.id in WORKING_ROOMS:
+                # move to working room
+                if not member_name in working_time_dict.keys():
+                    working_time_dict[member_name] = WorkingTime(now_time)
+                working_time: WorkingTime = working_time_dict[member_name]
+                working_time.start_working()
+            
+            message = member_name +'が'+ after.channel.name +'に移動'
+            await message_room.send(message)
+            
 
 show_working_times.start()
 client.run(TOKEN)
