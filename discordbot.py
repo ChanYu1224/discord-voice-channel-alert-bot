@@ -6,7 +6,7 @@ from os import getenv
 import os
 import datetime
 
-from working_time import WorkingTime
+from working_time import WorkingRecords
 
 # if `dev_settings.json` exists, read it
 if os.path.exists("./dev_settings.json"):
@@ -26,11 +26,21 @@ else:
     WEEKLY_ALERT_TIME = getenv("DISCORD_WEEKLY_ALERT_TIME")
     DAILY_ALERT_TIME = getenv("DISCORD_DAILY_ALERT_TIME")
     
-
 # initialization of necessary instances
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
-working_time_dict = {}
+
+weekly_records = WorkingRecords()
+daily_records = WorkingRecords()
+message_room = None
+
+@client.event
+async def on_ready():
+    global message_room
+    message_room = client.get_channel(MESSAGE_ROOM)
+    show_working_times.start()
+    await message_room.send(client.user.display_name +"が起動しました")
+
 
 # alert of working time
 @tasks.loop(seconds=60)
@@ -42,45 +52,21 @@ async def show_working_times():
     # weekly alert
     if date.weekday() == WEEKLY_ALERT_DAY and now == WEEKLY_ALERT_TIME:
         # the header of the message
-        message = "今週の作業時間\n"
-        for member_name, working_time in working_time_dict.items():
-            # make the annotation for `working_time`
-            working_time: WorkingTime = working_time
-            
-            # if you are working now, it resets the working time ongoing
-            if working_time.is_working():
-                working_time.end_working()
-                working_time.start_working()
-            
-            # create the message explaining the total working time
-            message += "{0}\t{1}\n".format(member_name, working_time.get_weekly_working_time_str())
-            
-            # reset the working time weekly
-            working_time.reset_weekly_working_time()
-            
-        message_room = client.get_channel(MESSAGE_ROOM)
+        message = "【今週の作業時間】\n"
+        message += weekly_records.get_sorted_working_records()
+        
+        weekly_records.reset_records()
+        
         await message_room.send(message)
     
     # daily alert
     if now == DAILY_ALERT_TIME:
         # the header of the message
-        message = "今日の作業時間\n"
-        for member_name, working_time in working_time_dict.items():
-            # make the annotation for `working_time`
-            working_time: WorkingTime = working_time
+        message = "【今日の作業時間】\n"
+        message += daily_records.get_sorted_working_records()
+        
+        daily_records.reset_records()
             
-            # if you are working now, it resets the working time ongoing
-            if working_time.is_working():
-                working_time.end_working()
-                working_time.start_working()
-            
-            # create the message explaining the total working time
-            message += "{0}\t{1}\n".format(member_name, working_time.get_daily_working_time_str())
-
-            # reset the working time daily
-            working_time.reset_daily_working_time()
-            
-        message_room = client.get_channel(MESSAGE_ROOM)
         await message_room.send(message)
         
 
@@ -91,19 +77,19 @@ async def on_voice_state_update(
         before:discord.VoiceState,
         after:discord.VoiceState
     ):
+    # when bots activate this method, it does nothing
+    if "bot" in list(map(str, member.roles)):
+        return
+    
     if before.channel != after.channel:
-        message_room = client.get_channel(MESSAGE_ROOM)
         member_name = member.display_name
-        now_time = datetime.datetime.now()
 
         # enter alert
         if before.channel is None:
             # update the state of working time
-            if after.channel.id in WORKING_ROOMS:                
-                if not member_name in working_time_dict.keys():
-                    working_time_dict[member_name] = WorkingTime(now_time)
-                working_time: WorkingTime = working_time_dict[member_name]
-                working_time.start_working()
+            if after.channel.id in WORKING_ROOMS:
+                weekly_records.start_record(member_name)
+                daily_records.start_record(member_name)
             
             message = member_name +'が'+ after.channel.name +'に入室'
             await message_room.send(message)
@@ -111,10 +97,8 @@ async def on_voice_state_update(
         # exit alert
         elif after.channel is None:
             # update the state of working time
-            if member_name in working_time_dict.keys():
-                working_time: WorkingTime = working_time_dict[member_name]
-                if working_time.is_working():
-                    working_time.end_working()
+            weekly_records.stop_record(member_name)
+            daily_records.stop_record(member_name)
             
             message = member_name +'が'+ before.channel.name +'を退室'
             await message_room.send(message)
@@ -124,21 +108,16 @@ async def on_voice_state_update(
             # update the state of working time
             if before.channel.id in WORKING_ROOMS and not after.channel.id in WORKING_ROOMS:
                 # move from working room
-                if member_name in working_time_dict.keys():
-                    working_time: WorkingTime = working_time_dict[member_name]
-                    if working_time.is_working():
-                        working_time.end_working()
+                weekly_records.stop_record(member_name)
+                daily_records.stop_record(member_name)
                         
             elif not before.channel.id in WORKING_ROOMS and after.channel.id in WORKING_ROOMS:
                 # move to working room
-                if not member_name in working_time_dict.keys():
-                    working_time_dict[member_name] = WorkingTime(now_time)
-                working_time: WorkingTime = working_time_dict[member_name]
-                working_time.start_working()
+                weekly_records.start_record(member_name)
+                daily_records.start_record(member_name)
             
             message = member_name +'が'+ after.channel.name +'に移動'
             await message_room.send(message)
             
-
-show_working_times.start()
+            
 client.run(TOKEN)
