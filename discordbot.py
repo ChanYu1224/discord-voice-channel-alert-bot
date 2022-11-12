@@ -34,6 +34,7 @@ weekly_records = WorkingRecords()
 daily_records = WorkingRecords()
 message_room = None
 
+
 @client.event
 async def on_ready():
     global message_room
