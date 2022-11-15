@@ -2,30 +2,25 @@ import discord
 from discord.ext import tasks
 
 import json
-from os import getenv
 import os
 import datetime
 
 from working_time import WorkingRecords
 
-# if `dev_settings.json` exists, read it
-if os.path.exists("./dev_settings.json"):
-    with open("./dev_settings.json", mode="r") as setting_file:
-        setting_dict = json.load(setting_file)
-    TOKEN = setting_dict["DISCORD_BOT_TOKEN"]
-    MESSAGE_ROOM = int(setting_dict["DISCORD_MESSAGE_ROOM"])
-    WORKING_ROOMS = list(map(int, setting_dict["DISCORD_WORKING_ROOMS"].split(",")))
-    WEEKLY_ALERT_DAY = int(setting_dict["DISCORD_WEEKLY_ALERT_DAY"])
-    WEEKLY_ALERT_TIME = setting_dict["DISCORD_WEEKLY_ALERT_TIME"]
-    DAILY_ALERT_TIME = setting_dict["DISCORD_DAILY_ALERT_TIME"]
-else:
-    TOKEN = getenv('DISCORD_BOT_TOKEN')
-    MESSAGE_ROOM = int(getenv('DISCORD_MESSAGE_ROOM'))
-    WORKING_ROOMS = list(map(int, getenv("DISCORD_WORKING_ROOMS").split(",")))
-    WEEKLY_ALERT_DAY = int(getenv("DISCORD_WEEKLY_ALERT_DAY"))
-    WEEKLY_ALERT_TIME = getenv("DISCORD_WEEKLY_ALERT_TIME")
-    DAILY_ALERT_TIME = getenv("DISCORD_DAILY_ALERT_TIME")
+
+# if `settings.json` exists, read it
+if os.path.exists("./settings.json"):
+    with open("./settings.json", mode="r") as setting_file:
+        settings = json.load(setting_file)
     
+    # catch the exception by assertion
+    assert settings["token"] is not None
+    assert settings["message_room_id"] is not None
+    assert settings["is_enable_working_time_alert"] is not None
+else:
+    raise FileNotFoundError("`settings.json` does not exist.")
+
+
 # initialization of necessary instances
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -38,8 +33,9 @@ message_room = None
 @client.event
 async def on_ready():
     global message_room
-    message_room = client.get_channel(MESSAGE_ROOM)
-    show_working_times.start()
+    message_room = client.get_channel(settings["message_room_id"])
+    if settings["is_enable_working_time_alert"]:
+        show_working_times.start()
     await message_room.send(client.user.display_name +"が起動しました")
 
 
@@ -51,7 +47,7 @@ async def show_working_times():
     now = now_time.strftime("%H:%M")
     
     # weekly alert
-    if date.weekday() == WEEKLY_ALERT_DAY and now == WEEKLY_ALERT_TIME:
+    if date.weekday() == settings["weekly_alert_weekday"] and now == settings["weekly_alert_time"]:
         # the header of the message
         message = "【今週の作業時間】\n"
         message += weekly_records.get_sorted_working_records()
@@ -61,7 +57,7 @@ async def show_working_times():
         await message_room.send(message)
     
     # daily alert
-    if now == DAILY_ALERT_TIME:
+    if now == settings["daily_alert_time"]:
         # the header of the message
         message = "【今日の作業時間】\n"
         message += daily_records.get_sorted_working_records()
@@ -88,7 +84,7 @@ async def on_voice_state_update(
         # enter alert
         if before.channel is None:
             # update the state of working time
-            if after.channel.id in WORKING_ROOMS:
+            if after.channel.id in settings["working_room_ids"]:
                 weekly_records.start_record(member_name)
                 daily_records.start_record(member_name)
             
@@ -107,12 +103,12 @@ async def on_voice_state_update(
         # change the room
         else:
             # update the state of working time
-            if before.channel.id in WORKING_ROOMS and not after.channel.id in WORKING_ROOMS:
+            if before.channel.id in settings["working_room_ids"] and not after.channel.id in settings["working_room_ids"]:
                 # move from working room
                 weekly_records.stop_record(member_name)
                 daily_records.stop_record(member_name)
                         
-            elif not before.channel.id in WORKING_ROOMS and after.channel.id in WORKING_ROOMS:
+            elif not before.channel.id in settings["working_room_ids"] and after.channel.id in settings["working_room_ids"]:
                 # move to working room
                 weekly_records.start_record(member_name)
                 daily_records.start_record(member_name)
@@ -121,4 +117,4 @@ async def on_voice_state_update(
             await message_room.send(message)
             
             
-client.run(TOKEN)
+client.run(settings["token"])
