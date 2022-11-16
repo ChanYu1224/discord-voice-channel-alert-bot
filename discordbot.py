@@ -9,6 +9,7 @@ import datetime
 
 from modules import WorkingRecords
 
+# set the logging
 logging.basicConfig(level=logging.INFO)
 
 # if `settings.json` exists, read it
