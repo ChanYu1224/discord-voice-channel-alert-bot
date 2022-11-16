@@ -53,7 +53,7 @@ class WorkingTime:
 
 
 class WorkingRecords:
-    def __init__(self) -> None:
+    def __init__(self,) -> None:
         self._working_time_dict: Dict[str, WorkingTime] = {}
         self._id_to_display_name: Dict[int, Member] = {}
     

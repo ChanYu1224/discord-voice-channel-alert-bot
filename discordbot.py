@@ -47,11 +47,24 @@ message_room = None
 
 @client.event
 async def on_ready():
+    # set the message room
     global message_room
     message_room = client.get_channel(settings["message_room_id"])
+    
+    # the setting for working time alert
     if settings["is_enable_working_time_alert"]:
+        # initialization of user states
+        for working_room_id in settings["working_room_ids"]:
+            working_voice_channel = client.get_channel(working_room_id)
+            for member_id in working_voice_channel.voice_states.keys():
+                member = await client.fetch_user(member_id)
+                weekly_records.start_record(member)
+                daily_records.start_record(member)
+        
+        # initialization of working time alert
         show_working_times.start()
     
+    # send activation message
     if settings["lang"] == "ja":
         await message_room.send(client.user.display_name +"が起動しました")
     else:
@@ -105,10 +118,6 @@ async def on_voice_state_update(
     member_roles_list = list(map(str, member.roles))
     if "bot" in member_roles_list:
         return
-    
-    # update member information on `WorkingRecords` classes
-    weekly_records.update_member(member)
-    daily_records.update_member(member)
     
     if before.channel != after.channel:
         # enter alert
