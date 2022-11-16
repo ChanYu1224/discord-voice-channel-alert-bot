@@ -5,7 +5,7 @@ import json
 import os
 import datetime
 
-from working_time import WorkingRecords
+from modules import WorkingRecords
 
 
 # if `settings.json` exists, read it
@@ -78,26 +78,28 @@ async def on_voice_state_update(
     if "bot" in list(map(str, member.roles)):
         return
     
+    # update member information on `WorkingRecords` classes
+    weekly_records.update_member(member)
+    daily_records.update_member(member)
+    
     if before.channel != after.channel:
-        member_name = member.display_name
-
         # enter alert
         if before.channel is None:
             # update the state of working time
             if after.channel.id in settings["working_room_ids"]:
-                weekly_records.start_record(member_name)
-                daily_records.start_record(member_name)
+                weekly_records.start_record(member)
+                daily_records.start_record(member)
             
-            message = member_name +'が'+ after.channel.name +'に入室'
+            message = member.display_name +'が'+ after.channel.name +'に入室'
             await message_room.send(message)
 
         # exit alert
         elif after.channel is None:
             # update the state of working time
-            weekly_records.stop_record(member_name)
-            daily_records.stop_record(member_name)
+            weekly_records.stop_record(member)
+            daily_records.stop_record(member)
             
-            message = member_name +'が'+ before.channel.name +'を退室'
+            message = member.display_name +'が'+ before.channel.name +'を退室'
             await message_room.send(message)
         
         # change the room
@@ -105,15 +107,15 @@ async def on_voice_state_update(
             # update the state of working time
             if before.channel.id in settings["working_room_ids"] and not after.channel.id in settings["working_room_ids"]:
                 # move from working room
-                weekly_records.stop_record(member_name)
-                daily_records.stop_record(member_name)
+                weekly_records.stop_record(member)
+                daily_records.stop_record(member)
                         
             elif not before.channel.id in settings["working_room_ids"] and after.channel.id in settings["working_room_ids"]:
                 # move to working room
-                weekly_records.start_record(member_name)
-                daily_records.start_record(member_name)
+                weekly_records.start_record(member)
+                daily_records.start_record(member)
             
-            message = member_name +'が'+ after.channel.name +'に移動'
+            message = member.display_name +'が'+ after.channel.name +'に移動'
             await message_room.send(message)
             
             
