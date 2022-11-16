@@ -11,14 +11,25 @@ from modules import WorkingRecords
 # if `settings.json` exists, read it
 if os.path.exists("./settings.json"):
     with open("./settings.json", mode="r") as setting_file:
-        settings = json.load(setting_file)
+        settings:dict = json.load(setting_file)
     
     # catch the exception by assertion
-    assert settings["token"] is not None
-    assert settings["message_room_id"] is not None
-    assert settings["is_enable_working_time_alert"] is not None
+    assert "token" in settings.keys()
+    assert "message_room_id" in settings.keys()
+    
+    # set the default values
+    settings["is_enable_working_time_alert"] = settings.get("is_enable_working_time_alert", False)
+    settings["weekly_alert_weekday"] = settings.get("weekly_alert_weekday", 0)
+    settings["weekly_alert_time"] = settings.get("weekly_alert_time", "21:00")
+    settings["daily_alert_time"] = settings.get("daily_alert_time", "21:00")
+    
+    if "lang" in settings.keys():
+        if not settings["lang"] in ["ja", "en"]:
+            raise ValueError("{0} is not supported as language".format(settings["lang"]))
+    else:
+        settings["lang"] = "en"
 else:
-    raise FileNotFoundError("`settings.json` does not exist.")
+    raise FileNotFoundError("`settings.json` does not exist")
 
 
 # initialization of necessary instances
@@ -36,7 +47,11 @@ async def on_ready():
     message_room = client.get_channel(settings["message_room_id"])
     if settings["is_enable_working_time_alert"]:
         show_working_times.start()
-    await message_room.send(client.user.display_name +"が起動しました")
+    
+    if settings["lang"] == "ja":
+        await message_room.send(client.user.display_name +"が起動しました")
+    else:
+        await message_room.send(client.user.display_name +" is now activated")
 
 
 # alert of working time
@@ -49,7 +64,11 @@ async def show_working_times():
     # weekly alert
     if date.weekday() == settings["weekly_alert_weekday"] and now == settings["weekly_alert_time"]:
         # the header of the message
-        message = "【今週の作業時間】\n"
+        if settings["lang"] == "ja":
+            message = "【今週の作業時間】\n"
+        else:
+            message = "[ weekly working times ]\n"
+        
         message += weekly_records.get_sorted_working_records()
         
         weekly_records.reset_records()
@@ -59,7 +78,11 @@ async def show_working_times():
     # daily alert
     if now == settings["daily_alert_time"]:
         # the header of the message
-        message = "【今日の作業時間】\n"
+        if settings["lang"] == "ja":
+            message = "【今日の作業時間】\n"
+        else:
+            message = "[ today's working times ]\n"
+        
         message += daily_records.get_sorted_working_records()
         
         daily_records.reset_records()
@@ -75,7 +98,8 @@ async def on_voice_state_update(
         after:discord.VoiceState
     ):
     # when bots activate this method, it does nothing
-    if "bot" in list(map(str, member.roles)):
+    member_roles_list = list(map(str, member.roles))
+    if "bot" in member_roles_list:
         return
     
     # update member information on `WorkingRecords` classes
@@ -90,7 +114,11 @@ async def on_voice_state_update(
                 weekly_records.start_record(member)
                 daily_records.start_record(member)
             
-            message = member.display_name +'が'+ after.channel.name +'に入室'
+            if settings["lang"] == "ja":
+                message = member.display_name +'が'+ after.channel.name +'に入室'
+            else:
+                message = "{0} has entered to {1}".format(member.display_name, after.channel.name)
+            
             await message_room.send(message)
 
         # exit alert
@@ -99,7 +127,11 @@ async def on_voice_state_update(
             weekly_records.stop_record(member)
             daily_records.stop_record(member)
             
-            message = member.display_name +'が'+ before.channel.name +'を退室'
+            if settings["lang"] == "ja":
+                message = member.display_name +'が'+ before.channel.name +'を退室'
+            else:
+                message = "{0} has exited from {1}".format(member.display_name, before.channel.name)
+            
             await message_room.send(message)
         
         # change the room
@@ -109,13 +141,17 @@ async def on_voice_state_update(
                 # move from working room
                 weekly_records.stop_record(member)
                 daily_records.stop_record(member)
-                        
+                
             elif not before.channel.id in settings["working_room_ids"] and after.channel.id in settings["working_room_ids"]:
                 # move to working room
                 weekly_records.start_record(member)
                 daily_records.start_record(member)
             
-            message = member.display_name +'が'+ after.channel.name +'に移動'
+            if settings["lang"] == "ja":
+                message = member.display_name +'が'+ after.channel.name +'に移動'
+            else:
+                message = "{0} has moved to {1}".format(member.display_name, after.channel.name)
+            
             await message_room.send(message)
             
             
