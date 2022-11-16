@@ -1,12 +1,15 @@
 import discord
 from discord.ext import tasks
 
+import logging
+
 import json
 import os
 import datetime
 
 from modules import WorkingRecords
 
+logging.basicConfig(level=logging.INFO)
 
 # if `settings.json` exists, read it
 if os.path.exists("./settings.json"):
@@ -155,4 +158,5 @@ async def on_voice_state_update(
             await message_room.send(message)
             
             
+
 client.run(settings["token"])
