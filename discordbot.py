@@ -2,7 +2,7 @@ import discord
 from discord.ext import tasks
 
 import logging
-
+import pprint
 import json
 import os
 import datetime
@@ -10,7 +10,17 @@ import datetime
 from modules import WorkingRecords
 
 # set the logging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("discordbot logger")
+logger.setLevel(logging.INFO)
+
+stream_handler = logging.StreamHandler()
+logger.addHandler(stream_handler)
+file_handler = logging.FileHandler("discordbot.log", encoding="utf-8", mode="w")
+logger.addHandler(file_handler)
+
+formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+stream_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 
 # if `settings.json` exists, read it
 if os.path.exists("./settings.json"):
@@ -32,6 +42,8 @@ if os.path.exists("./settings.json"):
             raise ValueError("{0} is not supported as language".format(settings["lang"]))
     else:
         settings["lang"] = "en"
+    
+    logger.info("initialized by setting as folows:\n{}".format(pprint.pformat(settings, indent=4)))
 else:
     raise FileNotFoundError("`settings.json` does not exist")
 
@@ -60,9 +72,11 @@ async def on_ready():
                 member = await client.fetch_user(member_id)
                 weekly_records.start_record(member)
                 daily_records.start_record(member)
+                logger.info("{0} has already entered into working room".format(member.display_name))
         
         # initialization of working time alert
         show_working_times.start()
+        logger.info("discord bot is activated!")
     
     # send activation message
     if settings["lang"] == "ja":
@@ -132,6 +146,7 @@ async def on_voice_state_update(
             else:
                 message = "{0} has entered to {1}".format(member.display_name, after.channel.name)
             
+            logger.info(message)
             await message_room.send(message)
 
         # exit alert
@@ -145,6 +160,7 @@ async def on_voice_state_update(
             else:
                 message = "{0} has exited from {1}".format(member.display_name, before.channel.name)
             
+            logger.info(message)
             await message_room.send(message)
         
         # change the room
@@ -165,6 +181,7 @@ async def on_voice_state_update(
             else:
                 message = "{0} has moved to {1}".format(member.display_name, after.channel.name)
             
+            logger.info(message)
             await message_room.send(message)
             
             
