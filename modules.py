@@ -73,6 +73,7 @@ class WorkingRecords:
         self._working_time_dict = new_working_time_dict
     
     def start_record(self, member:Member) -> None:
+        self.update_member(member)
         if not member.id in self._working_time_dict.keys():
             self._working_time_dict[member.id] = WorkingTime()
         
@@ -82,6 +83,7 @@ class WorkingRecords:
             self._working_time_dict[member.id].start_working()
     
     def stop_record(self, member:Member) -> None:
+        self.update_member(member)
         if member.id in self._working_time_dict.keys() and self._working_time_dict[member.id].is_working():
             self._working_time_dict[member.id].end_working()
     
