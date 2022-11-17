@@ -2,10 +2,10 @@ import discord
 from discord.ext import tasks
 
 import logging
-import pprint
 import json
 import os
 import datetime
+from copy import copy
 
 from modules import WorkingRecords
 
@@ -43,7 +43,9 @@ if os.path.exists("./settings.json"):
     else:
         settings["lang"] = "en"
     
-    logger.info("initialized by setting as folows:\n{}".format(pprint.pformat(settings, indent=4)))
+    settings_without_token = copy(settings)
+    settings_without_token["token"] = "****************"
+    logger.info("initialized by setting as folows:\n{}".format(json.dumps(settings_without_token, indent=4)))
 else:
     raise FileNotFoundError("`settings.json` does not exist")
 
@@ -129,8 +131,7 @@ async def on_voice_state_update(
         after:discord.VoiceState
     ):
     # when bots activate this method, it does nothing
-    member_roles_list = list(map(str, member.roles))
-    if "bot" in member_roles_list:
+    if member.bot:
         return
     
     if before.channel != after.channel:
