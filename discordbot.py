@@ -33,9 +33,9 @@ if os.path.exists("./settings.json"):
     
     # set the default values
     settings["is_enable_working_time_alert"] = settings.get("is_enable_working_time_alert", False)
-    settings["weekly_alert_weekday"] = settings.get("weekly_alert_weekday", 0)
-    settings["weekly_alert_time"] = settings.get("weekly_alert_time", "21:00")
-    settings["daily_alert_time"] = settings.get("daily_alert_time", "21:00")
+    settings["weekly_alert_weekday"] = settings.get("weekly_alert_weekday", -1)
+    settings["weekly_alert_time"] = settings.get("weekly_alert_time", "none")
+    settings["daily_alert_time"] = settings.get("daily_alert_time", "none")
     
     if "lang" in settings.keys():
         if not settings["lang"] in ["ja", "en"]:
