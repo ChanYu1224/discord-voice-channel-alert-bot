@@ -47,7 +47,7 @@ touch settings.json
 
 `settings.json`を編集します。
 
-```json
+```javascript
 {
     // discord bot token (required)
     "token": "********",
