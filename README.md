@@ -46,7 +46,7 @@ touch settings.json
 
 and edit `settings.json`
 
-```javascript
+```jsonc
 {
     // discord bot token (required)
     "token": "********",
